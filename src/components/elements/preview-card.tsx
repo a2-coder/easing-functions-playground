@@ -5,7 +5,7 @@ import { useCopyToClipboard } from "@/lib/hooks";
 import type { Configuration, Point, Size } from "@/lib/types";
 import { cn, interpolate } from "@/lib/utils";
 import { IconCopy, IconCopyCheckFilled } from "@tabler/icons-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const GRID_GAP = 8;
 const OFFSET = 16;
@@ -115,7 +115,7 @@ export function PreviewCard({ configuration }: Props) {
             c1,
             c2
         }
-    }, [configuration])
+    }, [configuration, transform])
 
     return (
         <Card className="flex-1 pb-0 gap-4">
@@ -146,64 +146,72 @@ export function PreviewCard({ configuration }: Props) {
             <CardContent className="p-4">
                 <div className="w-full aspect-square">
                     <svg ref={svgRef} viewBox={`0 0 ${size.w} ${size.h}`}>
-                        {/* grids */}
                         {
-                            grid.map(([s, e], idx) => (
-                                <line key={`grid__${idx}`} x1={s.x} y1={s.y} x2={e.x} y2={e.y} className="stroke-border/50" />
-                            ))
-                        }
-                        {/* curve */}
-                        <path ref={pathRef} className="stroke-[8px] stroke-amber-500/50" fill="none" d={d} />
-                        {/* lines connecting control points */}
-                        <line x1={curve[0].x} y1={curve[0].y} x2={curve[1].x} y2={curve[1].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                        <line x1={curve[2].x} y1={curve[2].y} x2={curve[3].x} y2={curve[3].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                        <line x1={curve[1].x} y1={curve[1].y} x2={curve[2].x} y2={curve[2].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                        {/* interpolation */}
-                        {/* Level 1 */}
-                        <line x1={interpolation.q1.x} y1={interpolation.q1.y} x2={interpolation.q2.x} y2={interpolation.q2.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
-                        <line x1={interpolation.q2.x} y1={interpolation.q2.y} x2={interpolation.q3.x} y2={interpolation.q3.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
-                        {
-                            [interpolation.q1, interpolation.q2, interpolation.q3].map((point, idx) => (
-                                <circle
-                                    key={`interpolation__l1__${idx}`}
-                                    cx={point.x}
-                                    cy={point.y}
-                                    r={4}
-                                    className="fill-indigo-500"
-                                />
-                            ))
-                        }
-                        {/* Level 2 */}
-                        <line x1={interpolation.c1.x} y1={interpolation.c1.y} x2={interpolation.c2.x} y2={interpolation.c2.y} className="stroke-blue-500 stroke-1" strokeDasharray="2 2" />
-                        {
-                            [interpolation.c1, interpolation.c2].map((point, idx) => (
-                                <circle
-                                    key={`interpolation__l2__${idx}`}
-                                    cx={point.x}
-                                    cy={point.y}
-                                    r={4}
-                                    className="fill-blue-500"
-                                />
-                            ))
-                        }
-                        {/* Level 3 */}
-                        <circle
-                            cx={interpolation.b.x}
-                            cy={interpolation.b.y}
-                            r={6}
-                            className="fill-background stroke-4 stroke-amber-500"
-                        />
-                        {/* control points */}
-                        {
-                            curve.map((point, idx) => (
-                                <circle key={`control__${idx}`} cx={point.x} cy={point.y} r={6} className={cn(
-                                    "fill-background stroke-4",
+                            scale > 0 && (
+                                <Fragment>
+                                    {/* grids */}
                                     {
-                                        "stroke-foreground": idx === 0 || idx === 3,
-                                        "stroke-gray-300": idx === 1 || idx === 2,
+                                        grid.map(([s, e], idx) => (
+                                            <line key={`grid__${idx}`} x1={s.x} y1={s.y} x2={e.x} y2={e.y} className="stroke-border/50" />
+                                        ))
                                     }
-                                )} />
-                            ))
+                                    {/* curve */}
+                                    <path ref={pathRef} className="stroke-[8px] stroke-amber-500/50" fill="none" d={d} />
+                                    {/* lines connecting control points */}
+                                    <line x1={curve[0].x} y1={curve[0].y} x2={curve[1].x} y2={curve[1].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
+                                    <line x1={curve[2].x} y1={curve[2].y} x2={curve[3].x} y2={curve[3].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
+                                    <line x1={curve[1].x} y1={curve[1].y} x2={curve[2].x} y2={curve[2].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
+                                    {/* interpolation */}
+                                    <g>
+                                        {/* Level 1 */}
+                                        <line x1={interpolation.q1.x} y1={interpolation.q1.y} x2={interpolation.q2.x} y2={interpolation.q2.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
+                                        <line x1={interpolation.q2.x} y1={interpolation.q2.y} x2={interpolation.q3.x} y2={interpolation.q3.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
+                                        {
+                                            [interpolation.q1, interpolation.q2, interpolation.q3].map((point, idx) => (
+                                                <circle
+                                                    key={`interpolation__l1__${idx}`}
+                                                    cx={point.x}
+                                                    cy={point.y}
+                                                    r={4}
+                                                    className="fill-indigo-500"
+                                                />
+                                            ))
+                                        }
+                                        {/* Level 2 */}
+                                        <line x1={interpolation.c1.x} y1={interpolation.c1.y} x2={interpolation.c2.x} y2={interpolation.c2.y} className="stroke-blue-500 stroke-1" strokeDasharray="2 2" />
+                                        {
+                                            [interpolation.c1, interpolation.c2].map((point, idx) => (
+                                                <circle
+                                                    key={`interpolation__l2__${idx}`}
+                                                    cx={point.x}
+                                                    cy={point.y}
+                                                    r={4}
+                                                    className="fill-blue-500"
+                                                />
+                                            ))
+                                        }
+                                        {/* Level 3 */}
+                                        <circle
+                                            cx={interpolation.b.x}
+                                            cy={interpolation.b.y}
+                                            r={6}
+                                            className="fill-background stroke-4 stroke-amber-500"
+                                        />
+                                    </g>
+                                    {/* control points */}
+                                    {
+                                        curve.map((point, idx) => (
+                                            <circle key={`control__${idx}`} cx={point.x} cy={point.y} r={6} className={cn(
+                                                "fill-background stroke-4",
+                                                {
+                                                    "stroke-foreground": idx === 0 || idx === 3,
+                                                    "stroke-gray-300": idx === 1 || idx === 2,
+                                                }
+                                            )} />
+                                        ))
+                                    }
+                                </Fragment>
+                            )
                         }
                     </svg>
                 </div>
