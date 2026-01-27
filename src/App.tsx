@@ -3,6 +3,9 @@ import PreviewCard from "@/components/elements/preview-card";
 import { useState } from "react";
 import { Separator } from "./components/ui/separator";
 import type { Configuration } from "./lib/types";
+import { IconBrandGithub, IconBrandGithubFilled, IconEaseInOutControlPoints, IconEaseInOutControlPointsFilled } from "@tabler/icons-react";
+import { Button } from "./components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./components/ui/tooltip";
 
 export function App() {
 
@@ -21,9 +24,30 @@ export function App() {
 
     return (
         <div className="w-screen h-screen flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center flex-none lg:p-8 md:p-4 p-2">
-                <h1 className="text-2xl font-bold">Bezier Curve</h1>
-                <p className="text-sm text-gray-500 font-light">by <span className="font-bold">@a2coder</span></p>
+            <div className="container flex items-center justify-between flex-none lg:p-4 md:p-2 p-2">
+                <div className="flex items-center gap-4">
+                    <div className="text-primary flex items-center justify-center size-10 border-2 border-primary">
+                        <IconEaseInOutControlPointsFilled className="size-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-bold">Bezier Curve</h1>
+                        <p className="text-xs text-gray-500 font-light">by <span className="font-bold">@a2coder</span></p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <a href="https://github.com/a2-coder/bezier-curve-playground" target="_blank" rel="noopener noreferrer">
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Button variant="outline" size="icon">
+                                    <IconBrandGithub />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                Open project on GitHub
+                            </TooltipContent>
+                        </Tooltip>
+                    </a>
+                </div>
             </div>
             <Separator className="flex-none" />
             <div className="container flex flex-col lg:p-8 md:p-4 p-2 flex-1 lg:gap-8 md:gap-4 gap-2 max-w-4xl">
