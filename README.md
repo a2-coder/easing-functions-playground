@@ -1,24 +1,29 @@
-# Bezier Curve Playground
+# Easing Functions
 
-An interactive web application for visualizing and understanding how cubic Bézier curves work. Built with React, TypeScript, and shadcn/ui.
+An interactive web application for visualizing and understanding easing functions in animations. Built with React, TypeScript, D3.js, and shadcn/ui.
 
 ## 🎯 Features
 
-- **Interactive Configuration Panel**: Adjust curve properties in real-time using intuitive sliders
-  - Canvas size (40-200 units)
-  - Start point coordinates (x, y)
-  - Control point 1 coordinates (x, y)
-  - Control point 2 coordinates (x, y)
-  - End point coordinates (x, y)
+- **Interactive Configuration Panel**: Adjust animation properties in real-time
+  - **Easing Function Selection**: Choose from 22 different easing functions including:
+    - Linear
+    - Polynomial (In, Out, InOut)
+    - Quadratic (In, Out, InOut)
+    - Cubic (In, Out, InOut)
+    - Sinusoidal (In, Out, InOut)
+    - Exponential (In, Out, InOut)
+    - Circular (In, Out, InOut)
+    - Elastic (In, Out, InOut)
+    - Back (In, Out, InOut)
+  - **Duration Control**: Adjust animation duration from 500ms to 5000ms
 
-- **Live Preview**: Visual representation of the Bézier curve with:
-  - Grid background for precise positioning
-  - Curve path rendered in real-time
-  - Visual markers for start, end, and control points
-  - Dashed lines connecting control points to their respective endpoints
-  - Color-coded points (black for start/end, gray for control points)
-
-- **SVG Code Export**: One-click copy of the generated SVG code for use in your projects
+- **Live Animation Preview**: Interactive visualization with:
+  - Real-time graph showing the easing curve
+  - Animated dot following the curve path
+  - Grid background with time (x-axis) and value (y-axis) indicators
+  - Side panel showing current value progression
+  - Play button to trigger animations
+  - Live time and value readouts during animation
 
 - **Responsive Design**: Works seamlessly across desktop and mobile devices
 
@@ -28,7 +33,9 @@ An interactive web application for visualizing and understanding how cubic Bézi
 - **Language**: TypeScript 5.9.3
 - **Build Tool**: Vite 7.2.4
 - **Styling**: Tailwind CSS 4.1.17
+- **Visualization**: D3.js 7.9.0 (for easing functions and SVG rendering)
 - **UI Components**: shadcn/ui with Base UI React
+- **State Management**: Zustand 5.0.10
 - **Icons**: Tabler Icons React
 - **Font**: JetBrains Mono (Variable)
 
@@ -36,8 +43,8 @@ An interactive web application for visualizing and understanding how cubic Bézi
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd bezier-curve-maker
+git clone https://github.com/a2-coder/easing-functions-playground
+cd easing-functions
 ```
 
 2. Install dependencies (using bun, npm, or yarn):
@@ -62,14 +69,10 @@ yarn dev
 
 ## 🚀 Usage
 
-1. **Adjust the Size**: Use the size slider to change the canvas dimensions
-2. **Move Points**: Adjust the x and y coordinates for:
-   - Start point: Where the curve begins
-   - Control Point 1: Influences the curve's initial direction
-   - Control Point 2: Influences the curve's final direction
-   - End point: Where the curve ends
-3. **Preview**: Watch the curve update in real-time as you adjust the parameters
-4. **Copy SVG**: Click the copy button in the preview panel to copy the SVG code to your clipboard
+1. **Select an Easing Function**: Use the dropdown menu to choose from 22 different easing functions
+2. **Adjust Duration**: Use the slider to set the animation duration (500ms - 5000ms)
+3. **Play Animation**: Click the play button in the preview panel to see the easing function in action
+4. **Observe**: Watch the animated dot move along the curve while monitoring the real-time time and value readouts
 
 ## 📁 Project Structure
 
@@ -78,28 +81,27 @@ src/
 ├── App.tsx                                    # Main application component
 ├── components/
 │   ├── elements/
-│   │   ├── configuration-card.tsx            # Configuration panel with sliders
-│   │   └── preview-card.tsx                  # Preview panel with SVG rendering
+│   │   ├── configuration-card.tsx            # Configuration panel with easing/duration controls
+│   │   └── preview-card.tsx                  # Preview panel with D3.js visualization
 │   └── ui/                                   # shadcn/ui components
 ├── lib/
-│   ├── types.ts                              # TypeScript type definitions
+│   ├── common.ts                             # Easing function definitions and options
 │   ├── hooks.ts                              # Custom React hooks
 │   └── utils.ts                              # Utility functions
+├── store/                                    # Zustand state management
 └── ...
 ```
 
-## 🎨 How Bézier Curves Work
+## 🎨 How Easing Functions Work
 
-A cubic Bézier curve is defined by four points:
-- **P0** (Start Point): The beginning of the curve
-- **P1** (Control Point 1): Influences the curve's direction at the start
-- **P2** (Control Point 2): Influences the curve's direction at the end
-- **P3** (End Point): The end of the curve
+Easing functions define the rate of change of a parameter over time, making animations feel more natural and dynamic. They map a linear progression of time (0 to 1) to a non-linear progression of values.
 
-The curve is mathematically defined by the formula:
-```
-B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3, where 0 ≤ t ≤ 1
-```
+**Common Easing Types:**
+- **In**: Slow start, fast end
+- **Out**: Fast start, slow end  
+- **InOut**: Slow start and end, fast middle
+
+This application uses D3.js's built-in easing functions, which are mathematically precise implementations used in data visualization and animation.
 
 ## 📝 License
 

@@ -1,218 +1,173 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCopyToClipboard } from "@/lib/hooks";
-import type { Configuration, Point, Size } from "@/lib/types";
-import { cn, interpolate } from "@/lib/utils";
-import { IconCopy, IconCopyCheckFilled } from "@tabler/icons-react";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import * as d3 from "d3";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBoundingRect } from "@/lib/hooks";
+import { Button } from "../ui/button";
+import { IconPlayerPlay } from "@tabler/icons-react";
+import { Spinner } from "../ui/spinner";
+import { useConfigStore } from "@/store";
+import { EASING_FUNCTIONS } from "@/lib/common";
 
-const GRID_GAP = 8;
-const OFFSET = 16;
+const MARGINS = { top: 24, right: 24, bottom: 24, left: 24 };
+const STEP = 2;
 
-type Props = {
-    configuration: Configuration;
-}
+export function PreviewCard() {
 
-export function PreviewCard({ configuration }: Props) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [scale, setScale] = useState(0);
-    const [size, setSize] = useState<Size>({ w: 100, h: 100 })
+    const { easing, duration } = useConfigStore();
+
+    const container = useRef<HTMLDivElement>(null);
+    const rect = useBoundingRect(container);
+    const size = useMemo(() => rect?.width || 0, [rect]);
+    const innerSize = useMemo(() => size - (MARGINS.left + MARGINS.right), [size]);
+
+    const gx = useRef<SVGGElement>(null);
+    const gy = useRef<SVGGElement>(null);
+    const x = useMemo(() => {
+        return d3.scaleLinear()
+            .domain([0, duration])
+            .range([MARGINS.left, size - MARGINS.right]);
+    }, [size, duration]);
+
+    const y = useMemo(() => {
+        return d3.scaleLinear()
+            .domain([-0.5, 1.5])
+            .range([size - MARGINS.bottom, MARGINS.top]);
+    }, [size]);
+
+    // draw axis
     useEffect(() => {
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const { width } = entry.contentRect;
-                // calculate scale based on width of the element and the size of the grid
-                const scale = (width - OFFSET * 2) / configuration.size;
-                setSize({ w: width, h: width });
-                setScale(scale);
+        if (gx.current) {
+            d3.select(gx.current).call(
+                d3.axisBottom(x)
+                    .tickValues(d3.range(0, duration + 1, duration / 5))
+                    .tickPadding(12)
+                    .tickSize(-innerSize)
+                    .tickFormat((d) => `${d}ms`)
+            );
+        }
+    }, [gx, x, innerSize, duration]);
+
+    useEffect(() => {
+        if (gy.current) {
+            d3.select(gy.current).call(
+                d3.axisLeft(y)
+                    .ticks(4)
+                    .tickPadding(4)
+                    .tickSize(-innerSize)
+                    .tickFormat(() => "")
+            );
+        }
+    }, [gy, y, innerSize]);
+
+    const ease = useMemo(() => {
+        return EASING_FUNCTIONS[easing];
+    }, [easing]);
+
+    const path = useMemo(() => {
+        const points = d3.range(0, duration + STEP, STEP).map((t) => {
+            return [x(t), y(ease(t / duration))] as [number, number]
+        })
+        return d3.line().x((d) => d[0]).y((d) => d[1]).curve(d3.curveBasis)(points)
+    }, [x, y, duration, ease]);
+
+    const dot = useRef<SVGCircleElement>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [time, setTime] = useState(0);
+    const [value, setValue] = useState(0);
+    const reset = useCallback(() => {
+        setTime(0)
+        setValue(0)
+        setIsAnimating(false);
+    }, []);
+    const animate = useCallback(() => {
+        setIsAnimating(true);
+        const t = d3.timer((elapsed) => {
+            const progress = elapsed / duration;
+            if (elapsed >= duration) {
+                t.stop();
+                // set to max
+                setValue(ease(1));
+                setTime(duration);
+                setIsAnimating(false);
+                // reset after 2 seconds
+                setTimeout(() => {
+                    reset();
+                }, 2000);
+            } else {
+                const value = ease(progress);
+                setValue(value);
+                setTime(elapsed);
             }
-        });
-        resizeObserver.observe(svgRef.current!);
+        }, duration);
         return () => {
-            resizeObserver.disconnect();
-        }
-    }, [configuration.size]);
-
-    const transform = useCallback((point: Point) => {
-        return {
-            x: point.x * scale + OFFSET,
-            y: point.y * scale + OFFSET
-        }
-    }, [scale]);
-
-    const grid = useMemo(() => {
-        const lines: [Point, Point][] = [];
-        for (let i = 0; i <= configuration.size; i += GRID_GAP) {
-            lines.push([transform({ x: 0, y: i }), transform({ x: configuration.size, y: i })]);
-            lines.push([transform({ x: i, y: 0 }), transform({ x: i, y: configuration.size })]);
-        }
-        return lines;
-    }, [configuration.size, transform]);
-
-    const curve = useMemo(() => {
-        const points: [Point, Point, Point, Point] = [
-            transform({ x: configuration.startX, y: configuration.startY }),
-            transform({ x: configuration.p1x, y: configuration.p1y }),
-            transform({ x: configuration.p2x, y: configuration.p2y }),
-            transform({ x: configuration.endX, y: configuration.endY })
-        ]
-        return points;
-    }, [configuration, transform]);
-
-    const d = useMemo(() => {
-        const [p0, p1, p2, p3] = curve;
-        return `M ${p0.x} ${p0.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${p3.y}`;
-    }, [curve]);
-
-    const code = useMemo(() => {
-        // the svg code for the curve
-        const { startX, startY, endX, endY, p1x, p1y, p2x, p2y, size } = configuration;
-        return `
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-        <path d="M ${startX} ${startY} C ${p1x} ${p1y}, ${p2x} ${p2y}, ${endX} ${endY}" fill="none" stroke="black" stroke-width="2" />
-        </svg>
-        `.trim();
-    }, [configuration]);
-
-    // copy svg code to clipboard
-    const { copy, copied } = useCopyToClipboard();
-
-    // preview interpolation points
-    const pathRef = useRef<SVGPathElement>(null)
-    const interpolation = useMemo(() => {
-        const { startX, startY, endX, endY, p1x, p1y, p2x, p2y, t } = configuration;
-        const s = {
-            x: startX,
-            y: startY
+            t.stop();
+            reset();
         };
-        const p1 = {
-            x: p1x,
-            y: p1y
-        };
-        const p2 = {
-            x: p2x,
-            y: p2y
-        };
-        const e = {
-            x: endX,
-            y: endY
-        };
-        // construct first level of interpolation
-        const q1 = transform(interpolate(s, p1, t));
-        const q2 = transform(interpolate(p1, p2, t));
-        const q3 = transform(interpolate(p2, e, t));
-        // construct second level of interpolation
-        const c1 = interpolate(q1, q2, t);
-        const c2 = interpolate(q2, q3, t);
-        // construct third level of interpolation
-        const b = interpolate(c1, c2, t);
-        return {
-            b,
-            q1,
-            q2,
-            q3,
-            c1,
-            c2
+    }, [reset, duration, ease]);
+
+    // the animation preview
+    const py = useRef<SVGGElement>(null);
+    useEffect(() => {
+        if (py.current) {
+            d3.select(py.current).call(
+                d3.axisRight(y)
+                    .ticks(5)
+                    .tickPadding(12)
+                    .tickSize(10)
+                    .tickFormat((d) => d.valueOf().toFixed(1))
+            );
         }
-    }, [configuration, transform])
+    }, [py, y]);
 
     return (
-        <Card className="flex-1 pb-0 gap-4">
+        <Card className="gap-0">
             <CardHeader className="border-b">
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <CardTitle>Preview</CardTitle>
-                        <CardDescription>Preview the bezier curve</CardDescription>
+                        <CardDescription>Preview the easing animation</CardDescription>
                     </div>
-                    <Tooltip>
-                        <TooltipTrigger>
-                            <Button disabled={copied} onClick={() => copy(code)} variant="outline" size="icon-sm">
-                                {
-                                    copied ? (
-                                        <IconCopyCheckFilled className="text-emerald-500" />
-                                    ) : (
-                                        <IconCopy />
-                                    )
-                                }
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            {copied ? "Copied!" : "Copy SVG Code"}
-                        </TooltipContent>
-                    </Tooltip>
+                    <Button variant="outline" size="icon" onClick={animate} disabled={isAnimating}>
+                        <IconPlayerPlay />
+                    </Button>
                 </div>
             </CardHeader>
             <CardContent className="p-4">
-                <div className="w-full aspect-square">
-                    <svg ref={svgRef} viewBox={`0 0 ${size.w} ${size.h}`}>
-                        {
-                            scale > 0 && (
-                                <Fragment>
-                                    {/* grids */}
-                                    {
-                                        grid.map(([s, e], idx) => (
-                                            <line key={`grid__${idx}`} x1={s.x} y1={s.y} x2={e.x} y2={e.y} className="stroke-border/50" />
-                                        ))
-                                    }
-                                    {/* curve */}
-                                    <path ref={pathRef} className="stroke-[8px] stroke-amber-500/50" fill="none" d={d} />
-                                    {/* lines connecting control points */}
-                                    <line x1={curve[0].x} y1={curve[0].y} x2={curve[1].x} y2={curve[1].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                                    <line x1={curve[2].x} y1={curve[2].y} x2={curve[3].x} y2={curve[3].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                                    <line x1={curve[1].x} y1={curve[1].y} x2={curve[2].x} y2={curve[2].y} className="stroke-gray-300 stroke-2" strokeDasharray="4 4" />
-                                    {/* interpolation */}
-                                    <g>
-                                        {/* Level 1 */}
-                                        <line x1={interpolation.q1.x} y1={interpolation.q1.y} x2={interpolation.q2.x} y2={interpolation.q2.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
-                                        <line x1={interpolation.q2.x} y1={interpolation.q2.y} x2={interpolation.q3.x} y2={interpolation.q3.y} className="stroke-indigo-500 stroke-1" strokeDasharray="2 2" />
-                                        {
-                                            [interpolation.q1, interpolation.q2, interpolation.q3].map((point, idx) => (
-                                                <circle
-                                                    key={`interpolation__l1__${idx}`}
-                                                    cx={point.x}
-                                                    cy={point.y}
-                                                    r={4}
-                                                    className="fill-indigo-500"
-                                                />
-                                            ))
-                                        }
-                                        {/* Level 2 */}
-                                        <line x1={interpolation.c1.x} y1={interpolation.c1.y} x2={interpolation.c2.x} y2={interpolation.c2.y} className="stroke-blue-500 stroke-1" strokeDasharray="2 2" />
-                                        {
-                                            [interpolation.c1, interpolation.c2].map((point, idx) => (
-                                                <circle
-                                                    key={`interpolation__l2__${idx}`}
-                                                    cx={point.x}
-                                                    cy={point.y}
-                                                    r={4}
-                                                    className="fill-blue-500"
-                                                />
-                                            ))
-                                        }
-                                        {/* Level 3 */}
-                                        <circle
-                                            cx={interpolation.b.x}
-                                            cy={interpolation.b.y}
-                                            r={6}
-                                            className="fill-background stroke-4 stroke-amber-500"
-                                        />
-                                    </g>
-                                    {/* control points */}
-                                    {
-                                        curve.map((point, idx) => (
-                                            <circle key={`control__${idx}`} cx={point.x} cy={point.y} r={6} className={cn(
-                                                "fill-background stroke-4",
-                                                {
-                                                    "stroke-foreground": idx === 0 || idx === 3,
-                                                    "stroke-gray-300": idx === 1 || idx === 2,
-                                                }
-                                            )} />
-                                        ))
-                                    }
-                                </Fragment>
-                            )
-                        }
+                <div className="flex items-end gap-0">
+                    <div className="flex-1 relative">
+                        <div className="flex items-center justify-between gap-4 px-6 absolute top-0 left-0 w-full">
+                            <div className="space-x-1">
+                                <span className="text-xs text-muted-foreground">Time</span>
+                                <span className="text-xs">{time.toFixed(0)}ms</span>
+                            </div>
+                            <div className="space-x-1">
+                                <span className="text-xs text-muted-foreground">Value</span>
+                                <span className="text-xs">{ease(value).toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div ref={container} className="w-full aspect-square flex items-center justify-center">
+                            {
+                                size ? (
+                                    <svg className="w-full aspect-square" viewBox={`0 0 ${size} ${size}`}>
+                                        <g className="preview_grid preview_grid__grid_x" ref={gx} transform={`translate(0, ${size - MARGINS.bottom})`} />
+                                        <g className="preview_grid preview_grid__grid_y" ref={gy} transform={`translate(${MARGINS.left}, 0)`} />
+                                        {path && <path d={path} className="stroke-blue-500/50 stroke-4 fill-none" />}
+                                        <line x1={x(time)} y1={y(value)} x2={size} y2={y(value)} className="stroke-orange-500" strokeDasharray="4,4" />
+                                        <circle ref={dot} cx={x(time)} cy={y(value)} r={6} className="fill-background stroke-4 stroke-blue-500" />
+                                    </svg>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <Spinner />
+                                        <span className="text-sm text-muted-foreground">Loading...</span>
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+                    <svg className="flex-none w-16" viewBox={`0 0 64 ${size}`}>
+                        <g className="[&_line]:stroke-border [&_path]:stroke-border" ref={py} transform={`translate(12, 0)`} />
+                        <line x1={0} y1={y(value)} x2={12} y2={y(value)} className="stroke-orange-500" />
+                        <circle cx={12} cy={y(ease(time / duration))} r={6} className="fill-background stroke-4 stroke-blue-500" />
                     </svg>
                 </div>
             </CardContent>
