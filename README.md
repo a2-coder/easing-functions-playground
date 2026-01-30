@@ -15,6 +15,7 @@ An interactive web application for visualizing and understanding easing function
     - Circular (In, Out, InOut)
     - Elastic (In, Out, InOut)
     - Back (In, Out, InOut)
+    - Bounce (In, Out, InOut)
   - **Duration Control**: Adjust animation duration from 500ms to 5000ms
 
 - **Live Animation Preview**: Interactive visualization with:
@@ -88,7 +89,7 @@ src/
 │   ├── common.ts                             # Easing function definitions and options
 │   ├── hooks.ts                              # Custom React hooks
 │   └── utils.ts                              # Utility functions
-├── store/                                    # Zustand state management
+├── store.ts                                  # Global config store
 └── ...
 ```
 
