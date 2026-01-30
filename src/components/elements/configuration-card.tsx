@@ -9,13 +9,12 @@ export function ConfigurationCard() {
     const { duration, setDuration, easing, setEasing } = useConfigStore();
 
     return (
-        <Card className="flex-1 gap-4">
+        <Card className="flex-none w-full lg:w-xs gap-4">
             <CardHeader className="border-b">
                 <CardTitle>Configuration</CardTitle>
-                <CardDescription>Adjust the properties of the curve in real-time</CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-4">
                     <Field>
                         <FieldLabel>Easing</FieldLabel>
                         <Select items={EASING_FUNCTION_OPTIONS} value={easing} onValueChange={(value) => setEasing(value as EasingFunction)}>

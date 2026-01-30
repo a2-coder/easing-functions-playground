@@ -7,6 +7,8 @@ import { IconPlayerPlay } from "@tabler/icons-react";
 import { Spinner } from "../ui/spinner";
 import { useConfigStore } from "@/store";
 import { EASING_FUNCTIONS } from "@/lib/common";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Indicator } from "../ui/indicator";
 
 const MARGINS = { top: 24, right: 24, bottom: 24, left: 24 };
 const STEP = 2;
@@ -120,16 +122,25 @@ export function PreviewCard() {
     }, [py, y]);
 
     return (
-        <Card className="gap-0">
+        <Card className="gap-0 w-full lg:flex-1">
             <CardHeader className="border-b">
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <CardTitle>Preview</CardTitle>
-                        <CardDescription>Preview the easing animation</CardDescription>
+                        <CardDescription>See the animation in action</CardDescription>
                     </div>
-                    <Button variant="outline" size="icon" onClick={animate} disabled={isAnimating}>
-                        <IconPlayerPlay />
-                    </Button>
+                    <Indicator>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Button variant="outline" size="icon" onClick={animate} disabled={isAnimating}>
+                                    <IconPlayerPlay />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                Run Animation
+                            </TooltipContent>
+                        </Tooltip>
+                    </Indicator>
                 </div>
             </CardHeader>
             <CardContent className="p-4">
