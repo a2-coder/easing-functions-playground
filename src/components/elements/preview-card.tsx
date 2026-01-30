@@ -1,14 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EASING_FUNCTIONS } from "@/lib/common";
+import { useBoundingRect } from "@/lib/hooks";
+import { useConfigStore } from "@/store";
+import { IconPlayerPlay } from "@tabler/icons-react";
 import * as d3 from "d3";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useBoundingRect } from "@/lib/hooks";
 import { Button } from "../ui/button";
-import { IconPlayerPlay } from "@tabler/icons-react";
-import { Spinner } from "../ui/spinner";
-import { useConfigStore } from "@/store";
-import { EASING_FUNCTIONS } from "@/lib/common";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Indicator } from "../ui/indicator";
+import { Spinner } from "../ui/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const MARGINS = { top: 24, right: 24, bottom: 24, left: 24 };
 const STEP = 2;

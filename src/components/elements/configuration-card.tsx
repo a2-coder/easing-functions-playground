@@ -1,9 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
+import { EASING_FUNCTION_OPTIONS, type EasingFunction } from "@/lib/common";
 import { useConfigStore } from "@/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { EASING_FUNCTION_OPTIONS, type EasingFunction } from "@/lib/common";
 
 export function ConfigurationCard() {
     const { duration, setDuration, easing, setEasing } = useConfigStore();
