@@ -18,7 +18,7 @@ export function ConfigurationCard() {
                 <div className="grid md:grid-cols-2 gap-4">
                     <Field>
                         <FieldLabel>Easing</FieldLabel>
-                        <Select value={easing} onValueChange={(value) => setEasing(value as EasingFunction)}>
+                        <Select items={EASING_FUNCTION_OPTIONS} value={easing} onValueChange={(value) => setEasing(value as EasingFunction)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select an easing function" />
                             </SelectTrigger>

@@ -31,7 +31,7 @@ export function PreviewCard() {
     const y = useMemo(() => {
         return d3.scaleLinear()
             .domain([-0.5, 1.5])
-            .range([size - MARGINS.bottom, MARGINS.top]);
+            .range([MARGINS.top, size - MARGINS.bottom]);
     }, [size]);
 
     // draw axis
